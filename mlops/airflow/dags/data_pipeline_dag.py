@@ -70,7 +70,7 @@ with DAG(
     dag_id="data_pipeline",
     default_args=default_args,
     description="Daily data ingestion, validation, cleaning, encoding, and feature engineering",
-    schedule_interval="@daily",
+    schedule="@daily",
     start_date=datetime(2025, 1, 1, tzinfo=UTC),
     catchup=False,
     tags=["customer-attrition", "data"],

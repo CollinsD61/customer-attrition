@@ -123,7 +123,7 @@ with DAG(
     dag_id="train_pipeline",
     default_args=default_args,
     description="Weekly model training, evaluation, and registration",
-    schedule_interval="@weekly",
+    schedule="@weekly",
     start_date=datetime(2025, 1, 1, tzinfo=UTC),
     catchup=False,
     tags=["customer-attrition", "training"],

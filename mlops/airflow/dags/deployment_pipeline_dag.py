@@ -61,7 +61,7 @@ with DAG(
     dag_id="deploy_pipeline",
     default_args=default_args,
     description="Manual deployment pipeline: check registry, promote model, deploy to KServe",
-    schedule_interval=None,
+    schedule=None,
     start_date=datetime(2025, 1, 1, tzinfo=UTC),
     catchup=False,
     tags=["customer-attrition", "deployment"],

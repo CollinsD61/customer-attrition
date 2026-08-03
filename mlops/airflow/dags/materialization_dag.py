@@ -34,7 +34,7 @@ with DAG(
     dag_id="materialize_features",
     default_args=default_args,
     description="Hourly feature materialization to Redis online store",
-    schedule_interval="@hourly",
+    schedule="@hourly",
     start_date=datetime(2025, 1, 1, tzinfo=UTC),
     catchup=False,
     tags=["customer-attrition", "feast"],
