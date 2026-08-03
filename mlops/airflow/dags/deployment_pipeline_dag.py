@@ -6,7 +6,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from customer_attrition.common.config import config
 from customer_attrition.common.logging import setup_logging
 
@@ -57,6 +56,49 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+def _deploy_to_kserve(**context) -> None:
+    import yaml
+    from kubernetes import client, config
+    
+    logger = setup_logging()
+    
+    config.load_incluster_config()
+    api = client.CustomObjectsApi()
+    
+    # Git sync clones to /opt/airflow/dags/repo
+    yaml_path = os.path.join(
+        os.path.dirname(__file__), "..", "..", "..", "k8s", "kserve", "inference-service.yaml"
+    )
+    with open(yaml_path, "r") as f:
+        resource = yaml.safe_load(f)
+        
+    name = resource["metadata"]["name"]
+    namespace = resource["metadata"]["namespace"]
+    
+    try:
+        api.create_namespaced_custom_object(
+            group="serving.kserve.io",
+            version="v1beta1",
+            namespace=namespace,
+            plural="inferenceservices",
+            body=resource,
+        )
+        logger.info(f"Created InferenceService {name} in {namespace}")
+    except client.exceptions.ApiException as e:
+        if e.status == 409:
+            # Patch existing
+            api.patch_namespaced_custom_object(
+                group="serving.kserve.io",
+                version="v1beta1",
+                namespace=namespace,
+                plural="inferenceservices",
+                name=name,
+                body=resource,
+            )
+            logger.info(f"Updated InferenceService {name} in {namespace}")
+        else:
+            raise
+
 with DAG(
     dag_id="deploy_pipeline",
     default_args=default_args,
@@ -76,15 +118,9 @@ with DAG(
         python_callable=_promote_model,
     )
 
-    deploy_to_kserve = KubernetesPodOperator(
+    deploy_to_kserve = PythonOperator(
         task_id="deploy_to_kserve",
-        namespace="default",
-        image="bitnami/kubectl:latest",
-        cmds=["kubectl", "apply", "-f", "/opt/inference-service.yaml"],
-        volumes=[],
-        name="deploy-kserve",
-        is_delete_operator_pod=True,
-        get_logs=True,
+        python_callable=_deploy_to_kserve,
     )
 
     check_model_registry >> promote_model >> deploy_to_kserve

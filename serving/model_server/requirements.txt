@@ -8,3 +8,4 @@ redis
 feast
 boto3
 python-dotenv
+mlflow
