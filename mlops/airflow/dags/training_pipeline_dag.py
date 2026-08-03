@@ -9,10 +9,7 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from customer_attrition.common.config import config
 from customer_attrition.common.logging import setup_logging
 from customer_attrition.common.s3 import read_parquet
-from customer_attrition.training.evaluate import evaluate_model, get_feature_importance
-from customer_attrition.training.register import register_model
-from customer_attrition.training.train import train_model
-from sklearn.model_selection import train_test_split
+
 
 _FEATURES_KEY = f"{config.s3_features_prefix}/churn_features.parquet"
 _MIN_ROC_AUC = 0.75
@@ -26,6 +23,8 @@ def _fetch_training_data(**context) -> None:
     ]
     X = df[feature_cols]
     y = df["churn"]
+
+    from sklearn.model_selection import train_test_split
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=config.test_size, random_state=config.model_random_state
@@ -75,6 +74,9 @@ def _train_and_evaluate(**context) -> None:
     )
     X_train, X_test, X_val, y_train, y_test, y_val, feature_cols = data
 
+    from customer_attrition.training.evaluate import evaluate_model, get_feature_importance
+    from customer_attrition.training.train import train_model
+
     model, _ = train_model(X_train, y_train, X_val, y_val)
     metrics = evaluate_model(model, X_test, y_test)
     importance = get_feature_importance(model, feature_cols)
@@ -105,6 +107,8 @@ def _register_model(**context) -> None:
         bytes.fromhex(ti.xcom_pull(key="model_bytes", task_ids="train_and_evaluate"))
     )
     metrics = ti.xcom_pull(key="metrics", task_ids="train_and_evaluate")
+    from customer_attrition.training.register import register_model
+
     version = register_model(
         model, metrics, config.mlflow_experiment_name, "churn-predictor"
     )

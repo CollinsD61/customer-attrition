@@ -7,13 +7,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from customer_attrition.common.logging import setup_logging
-from feast import FeatureStore
+
 
 _FEAST_REPO = os.path.join(os.path.dirname(__file__), "..", "..", "feast")
 
 
 def _materialize_features(**context) -> None:
     logger = setup_logging()
+    from feast import FeatureStore
     store = FeatureStore(repo_path=_FEAST_REPO)
     store.materialize(
         start_date=datetime.now(tz=UTC),
