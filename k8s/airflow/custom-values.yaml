@@ -1,0 +1,34 @@
+data:
+  metadataConnection:
+    db: airflow
+    host: postgresql.postgresql.svc.cluster.local
+    pass: postgres
+    port: 5432
+    sslmode: disable
+    user: postgres
+executor: CeleryExecutor
+fernetKey: FfbjRAeyHimf+OmYoAzXhBxFVP2XRAF1OgLeuz7TKmQ=
+postgresql:
+  enabled: false
+redis:
+  enabled: true
+
+dags:
+  gitSync:
+    enabled: true
+    repo: https://github.com/CollinsD61/customer-attrition.git
+    branch: main
+    subPath: "mlops/airflow/dags"
+env:
+  - name: _PIP_ADDITIONAL_REQUIREMENTS
+    value: "mlflow-skinny"
+  - name: MLFLOW_TRACKING_URI
+    value: "http://mlflow.mlflow.svc.cluster.local:80"
+
+apiServer:
+  startupProbe:
+    failureThreshold: 30
+webserver:
+  startupProbe:
+    failureThreshold: 30
+
