@@ -1,0 +1,11 @@
+customer_id,signup_date,age,gender,annual_income,education,marital_status,dependents,tenure,contract,payment_method,paperless_billing,senior_citizen,monthlycharges,totalcharges,num_services,has_phone_service,has_internet_service,has_online_security,has_online_backup,has_device_protection,has_tech_support,has_streaming_tv,has_streaming_movies,customer_satisfaction,num_complaints,num_service_calls,late_payments,avg_monthly_gb,days_since_last_interaction,credit_score,churn
+CUST0000000001,2022-12-12 12:53:58.199463,43,Female,55085.25,college,married,1,2,two_year,electronic_check,Yes,0,67.2,144.39,1,1,1,0,0,1,1,1,1,9,0,0,0,109.63,16,650.0,0
+CUST0000000002,2022-01-13 12:53:58.199973,18,Male,60786.11,master,married,1,22,one_year,bank_transfer,Yes,0,71.54,1602.22,2,0,1,0,1,0,0,0,1,7,0,3,1,63.25,134,585.0,0
+CUST0000000003,2023-05-01 08:15:00.000000,29,Male,42000.00,high_school,single,0,2,month-to-month,electronic_check,Yes,0,88.75,178.9,3,1,1,0,0,0,0,0,1,2,3,4,3,42.1,3,520.0,1
+CUST0000000004,2021-08-20 14:30:00.000000,35,Female,68500.50,college,single,2,48,two_year,credit_card,No,1,110.35,5296.8,5,1,1,1,1,1,1,1,1,8,0,1,0,150.2,45,710.0,0
+CUST0000000005,2022-11-02 09:05:00.000000,51,Male,73890.00,college,married,3,36,one_year,mailed_check,No,0,97.42,3507.12,4,1,1,1,0,1,0,0,1,6,1,2,1,88.35,60,655.0,0
+CUST0000000006,2023-03-15 20:45:00.000000,62,Female,45980.75,high_school,widowed,0,5,month-to-month,bank_transfer,Yes,1,76.88,384.4,2,1,0,0,0,0,0,0,0,4,2,5,2,35.8,8,480.0,1
+CUST0000000007,2020-06-30 11:20:00.000000,27,Male,91250.00,master,single,0,60,two_year,credit_card,Yes,0,128.9,7734.0,6,1,1,1,1,1,1,1,1,10,0,0,0,210.45,90,790.0,0
+CUST0000000008,2022-09-10 18:12:00.000000,44,Female,52340.60,college,divorced,1,15,one_year,electronic_check,Yes,0,84.1,1261.5,3,1,1,1,0,0,1,0,1,5,1,1,1,72.3,22,,0
+CUST0000000009,2023-07-25 07:55:00.000000,33,Male,38700.00,high_school,married,2,8,month-to-month,mailed_check,No,0,65.4,523.2,1,1,0,0,0,0,0,0,0,3,2,2,1,28.6,5,445.0,1
+CUST0000000010,2021-01-18 16:40:00.000000,58,Female,67450.00,college,married,1,30,two_year,bank_transfer,No,1,102.55,3076.5,4,1,1,1,1,0,1,1,0,7,0,2,0,95.1,40,640.0,0

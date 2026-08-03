@@ -1,0 +1,26 @@
+# Deploy backend (FastAPI).
+# Chạy khi merge vào main (chỉ khi code backend đổi) hoặc bấm tay qua workflow_dispatch.
+# Kết nối: phụ thuộc ci-python.yml + ci-mlops.yml (required checks) đã pass trên PR,
+# và gọi reusable workflow build-and-deploy.yml ở trên.
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/build-and-deploy.yml
+    with:
+      component: backend
+      build_context: backend
+      k8s_dir: k8s/backend
+      run_contract_tests: false
+    secrets:
+      registry_token: ${{ secrets.GITHUB_TOKEN }}

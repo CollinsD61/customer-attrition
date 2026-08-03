@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mlflow
+  namespace: mlflow
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mlflow.mlops.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mlflow
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airflow
+  namespace: airflow
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: airflow.mlops.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: airflow-api-server
+                port:
+                  number: 8080

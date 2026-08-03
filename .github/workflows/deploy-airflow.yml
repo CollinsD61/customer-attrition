@@ -1,0 +1,51 @@
+# Deploy Airflow: sync DAG code + requirements lên Airflow, KHÔNG build image
+# (Airflow image thường build riêng, giữ image này stable). Đây là lý do file này
+# không dùng chung build-and-deploy.yml — không cần build/push image.
+# Kết nối: DAG đã được validate bởi ci-mlops.yml (airflow dags list-import-errors)
+# ở bước PR. Workflow này chỉ copy code lên + reload scheduler.
+name: Deploy Airflow
+
+on:
+  push:
+    branches: [main]
+    paths: ['mlops/dags/**', 'dags/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-airflow
+  cancel-in-progress: true
+
+jobs:
+  sync-dags:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "::warning::Chưa có secrets.KUBE_CONFIG — skip."
+            exit 0
+          fi
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG" | base64 -d > $HOME/.kube/config
+
+      - name: Copy DAGs vào pod scheduler (via ConfigMap hoặc PVC)
+        run: |
+          POD=$(kubectl get pod -n airflow -l component=scheduler -o name | head -1)
+          if [ -z "$POD" ]; then
+            echo "::warning::Không tìm thấy Airflow scheduler pod — skip."
+            exit 0
+          fi
+          # ponytail: đơn giản hoá — copy trực tiếp vào PVC mount của scheduler.
+          # Nếu dùng git-sync (pattern chuẩn hơn), thay 2 bước sau bằng trigger sync.
+          kubectl cp dags/ "airflow/$POD:/opt/airflow/dags/"
+
+      - name: Trigger DAG scan
+        run: |
+          kubectl exec -n airflow deploy/scheduler -- airflow dags reserialize

@@ -1,0 +1,14 @@
+pandas
+numpy
+scikit-learn
+xgboost
+lightgbm
+boto3
+s3fs
+pyarrow
+pydantic
+feast
+mlflow
+redis
+python-dotenv
+great_expectations

@@ -1,0 +1,116 @@
+# Workflow REUSABLE — dùng chung cho backend, frontend, KServe.
+# Các workflow deploy-*.yml chỉ gọi workflow này qua `uses: ./.github/workflows/build-and-deploy.yml`
+# và truyền inputs khác nhau. Mỗi thành phần deploy = 1 lần gọi, tránh copy-paste.
+#
+# Kết nối:
+#   deploy-*.yml (caller) ──► build-and-deploy.yml này ──► áp manifest lên cluster
+# Quy trình: build image → push registry → (tuỳ chọn) test contract → áp k8s manifest.
+name: Build and Deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      # Tên thành phần, dùng cho tên image + tag. VD: backend, frontend, kserve
+      component:
+        required: true
+        type: string
+      # Thư mục chứa Dockerfile + context build. VD: backend, serving
+      build_context:
+        required: true
+        type: string
+      # Thư mục manifest K8s sẽ được áp dụng. VD: k8s/backend, k8s/kserve
+      k8s_dir:
+        required: true
+        type: string
+      # Có chạy contract test trước khi deploy không (KServe thì bật)
+      run_contract_tests:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      # Token để push image lên registry (thường là GITHUB_TOKEN)
+      registry_token:
+        required: true
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}  # image tag đầy đủ cho job deploy dùng
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.registry_token }}
+
+      - name: Build metadata (tag = git sha)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ inputs.component }}
+          tags: |
+            type=sha
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.build_context }}
+          file: ${{ inputs.build_context }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  # Gate trước deploy: chạy contract test trên image vừa build.
+  # Riêng KServe bật (run_contract_tests: true) vì đây là mảnh nhạy nhất.
+  contract-test:
+    if: inputs.run_contract_tests
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run prediction contract tests
+        run: pytest serving/tests
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}  # kubeconfig base64, set trong repo settings
+        run: |
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "::warning::Chưa có secrets.KUBE_CONFIG — skip deploy, chỉ build+push."
+            exit 0
+          fi
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG" | base64 -d > $HOME/.kube/config
+
+      - name: Áp manifest (image tag từ job build-push)
+        env:
+          IMAGE: ${{ needs.build-push.outputs.image }}
+        run: |
+          # kustomize substitute: thay placeholder {{IMAGE}} trong manifest bằng image thật
+          find ${{ inputs.k8s_dir }} -name '*.yaml' -exec \
+            sed -i 's|{{IMAGE}}|'"$IMAGE"'|g' {} +
+          kubectl apply -f ${{ inputs.k8s_dir }}
+
+      - name: Chờ rollout hoàn tất
+        env:
+          IMAGE: ${{ needs.build-push.outputs.image }}
+        run: |
+          DEPLOYMENT=$(kubectl get deploy -l app=${{ inputs.component }} -o name | head -1)
+          if [ -n "$DEPLOYMENT" ]; then
+            kubectl rollout status "$DEPLOYMENT" --timeout=5m
+          fi

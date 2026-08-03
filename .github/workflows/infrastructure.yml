@@ -1,0 +1,56 @@
+# Deploy base infrastructure: namespaces, Feast, MLflow, Postgres, Redis, ingress.
+# KHÔNG build image — các thành phần này dùng chart/manifest đã ổn định.
+# Chạy bằng tay (workflow_dispatch) khi muốn thay đổi infra, hoặc trên main
+# khi có thay đổi manifest base.
+# Kết nối: đây là nền tảng — chạy TRƯỚC deploy-backend/frontend/kserve lần đầu.
+# Các deploy thành phần phụ thuộc hạ tầng này đã sẵn sàng.
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths: ['k8s/namespaces/**', 'k8s/postgres/**', 'k8s/redis/**', 'k8s/mlflow/**', 'k8s/feast/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-infra
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "::warning::Chưa có secrets.KUBE_CONFIG — skip."
+            exit 0
+          fi
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG" | base64 -d > $HOME/.kube/config
+
+      # Thứ tự áp dụng có ý nghĩa: namespace trước, rồi tới stateful services
+      - name: Apply namespaces
+        run: kubectl apply -f k8s/namespaces/
+
+      - name: Apply Postgres
+        run: kubectl apply -f k8s/postgres/
+
+      - name: Apply Redis
+        run: kubectl apply -f k8s/redis/
+
+      - name: Apply MLflow
+        run: kubectl apply -f k8s/mlflow/
+
+      - name: Apply Feast
+        run: kubectl apply -f k8s/feast/
+
+      - name: Apply ingress
+        run: kubectl apply -f k8s/kind/ingress.yaml || echo "::warning::chưa có ingress — skip"

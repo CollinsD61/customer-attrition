@@ -1,0 +1,31 @@
+# Lint manifest K8s — khớp rule AGENTS.md "Validate YAML" trước khi merge.
+# Kết nối: chạy trên PR đụng k8s/; là required check. Đảm bảo manifest hợp lệ
+# trước khi các workflow deploy-*.yml áp chúng lên cluster.
+name: K8s Manifest Lint
+
+on:
+  pull_request:
+    paths: ['k8s/**']
+  push:
+    branches: [main]
+    paths: ['k8s/**']
+
+concurrency:
+  group: k8s-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kubeconform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate YAML + K8s schema (kubeconform)
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /tmp
+          # --ignore-missing-schemas: bỏ qua CRD (KServe, Airflow) chưa có schema offline
+          /tmp/kubeconform \
+            --ignore-missing-schemas \
+            --strict \
+            k8s/

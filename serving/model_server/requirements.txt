@@ -1,0 +1,10 @@
+kserve
+lightgbm
+scikit-learn
+numpy
+pandas
+pydantic
+redis
+feast
+boto3
+python-dotenv

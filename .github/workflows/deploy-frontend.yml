@@ -1,0 +1,25 @@
+# Deploy frontend (Vite SPA -> static image).
+# Chạy khi merge vào main (code frontend đổi) hoặc bấm tay.
+# Kết nối: phụ thuộc ci-frontend.yml (required check), gọi reusable build-and-deploy.yml.
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/build-and-deploy.yml
+    with:
+      component: frontend
+      build_context: frontend
+      k8s_dir: k8s/frontend
+      run_contract_tests: false
+    secrets:
+      registry_token: ${{ secrets.GITHUB_TOKEN }}

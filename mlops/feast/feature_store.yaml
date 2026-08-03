@@ -1,0 +1,9 @@
+project: customer_churn
+provider: local
+registry: s3://customer-churn-mlops-dev/feast-registry/
+online_store:
+  type: redis
+  connection_string: "${REDIS_CONNECTION}"
+offline_store:
+  type: file
+entity_key_serialization_version: 2

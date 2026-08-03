@@ -1,0 +1,255 @@
+# =========================================================
+# 1. SECRETS / ENVIRONMENT VARIABLES
+# =========================================================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+secrets.yaml
+secret.yaml
+**/secrets.yaml
+**/secrets-*.yaml
+**/*secret*.yaml
+
+aws_credentials
+.aws/
+credentials
+config
+
+# Không commit kubeconfig thật
+kubeconfig
+*.kubeconfig
+
+# Terraform / cloud secret vars nếu có
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+
+
+# =========================================================
+# 2. DATASETS / LARGE DATA FILES
+# =========================================================
+
+# Không commit raw, interim, processed data thật
+data/raw/*
+data/interim/*
+data/processed/*
+data/feature_tables/*
+
+# Giữ cấu trúc thư mục
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/feature_tables/.gitkeep
+
+# Cho phép commit sample data nhỏ
+!data/samples/
+!data/samples/**
+
+# Dữ liệu lớn hoặc generated
+*.csv
+*.parquet
+*.feather
+*.arrow
+*.orc
+*.avro
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.joblib
+*.pkl
+*.pickle
+
+# Nhưng cho phép fixture/sample nhỏ dùng trong test
+!tests/fixtures/**
+!**/tests/fixtures/**
+!data/samples/**
+
+# DVC quản lý file pointer, không ignore file .dvc
+.dvc/cache/
+.dvc/tmp/
+.dvc/plots/
+.dvc/repo/
+.dvc/state
+.dvc/state-journal
+
+
+# =========================================================
+# 3. MODEL / ARTIFACT / RUNTIME OUTPUT
+# =========================================================
+
+artifacts/local/*
+!artifacts/local/.gitkeep
+
+models/
+checkpoints/
+outputs/
+runs/
+reports/generated/
+tmp/
+temp/
+
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.model
+*.xgb
+*.cbm
+*.safetensors
+
+# MLflow local runtime
+mlruns/
+mlartifacts/
+.mlflow/
+
+# Feast local runtime
+.feast/
+feast_registry.db
+registry.db
+*.db
+
+# Nếu Feast tạo registry file cục bộ
+mlops/feast/data/
+mlops/feast/registry*
+
+# Airflow runtime
+airflow.db
+airflow.cfg
+airflow-webserver.pid
+airflow-scheduler.pid
+logs/
+mlops/airflow/logs/
+mlops/airflow/airflow.db
+
+# Local SQLite
+*.sqlite
+*.sqlite3
+
+# Coverage / test output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+pytest-report.xml
+junit.xml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+
+
+# =========================================================
+# 4. PYTHON
+# =========================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv/
+venv/
+env/
+ENV/
+
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+.ipynb_checkpoints/
+
+# Local Python config
+.python-version
+
+
+# =========================================================
+# 5. FRONTEND / NODE
+# =========================================================
+
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.nuxt/
+frontend/.vite/
+frontend/coverage/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Optional package manager cache
+.pnpm-store/
+.yarn/cache/
+.yarn/install-state.gz
+
+
+# =========================================================
+# 6. DOCKER / KUBERNETES LOCAL FILES
+# =========================================================
+
+docker-compose.override.yml
+
+# Không commit manifest chứa secret thật
+k8s/**/secrets.yaml
+k8s/**/*-secret.yaml
+k8s/**/*-secrets.yaml
+
+# Nhưng commit file mẫu
+!k8s/**/secrets.example.yaml
+!k8s/**/*.example.yaml
+
+# Kind runtime/local
+.kind/
+kind-cluster/
+*.tar
+
+# Helm local output nếu có
+charts/**/charts/
+charts/**/tmp/
+
+
+# =========================================================
+# 7. DATADOG / OBSERVABILITY LOCAL OUTPUT
+# =========================================================
+
+.datadog/
+datadog-agent.log
+dd-trace-*.log
+observability/local/
+monitoring/local/
+
+
+# =========================================================
+# 8. IDE / OS
+# =========================================================
+
+.vscode/
+.idea/
+*.iml
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.swp
+*.swo
+*~

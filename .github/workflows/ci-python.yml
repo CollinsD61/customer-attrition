@@ -1,0 +1,54 @@
+# CI cho toàn bộ Python backend: backend/ (FastAPI) + mlops/ + serving/
+# Chạy trên mọi PR đụng tới code Python + push lên main.
+# Kết nối: nếu job này fail -> không merge được (required check) -> deploy không chạy.
+name: CI Python
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'mlops/**'
+      - 'serving/**'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'mlops/**'
+      - 'serving/**'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+
+concurrency:
+  group: ci-python-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job duy nhất: lint -> typecheck -> test theo đúng thứ tự trong AGENTS.md
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install deps
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -r backend/requirements.txt
+
+      - name: Lint (ruff check)
+        run: ruff check .
+
+      - name: Format check (ruff format)
+        run: ruff format --check .
+
+      - name: Typecheck (mypy)
+        run: mypy backend mlops/src serving
+
+      - name: Unit tests (backend + mlops + serving)
+        run: pytest backend/tests/unit mlops/tests/unit serving/tests

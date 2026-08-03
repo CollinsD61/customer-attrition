@@ -1,0 +1,65 @@
+# CI đặc thù MLOps — tách khỏi ci-python.yml vì cần Feast CLI + Airflow CLI,
+# không phải pytest thuần.
+# Kết nối: required check trên PR. Đảm bảo feature registry và DAG hợp lệ
+# trước khi ci-mlops cho phép merge -> deploy-airflow.yml chỉ sync code đã validate.
+name: CI MLOps (Feast + Airflow)
+
+on:
+  pull_request:
+    paths:
+      - 'mlops/**'
+      - 'dvc.yaml'
+      - 'params.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'mlops/**'
+      - 'dvc.yaml'
+      - 'params.yaml'
+
+concurrency:
+  group: ci-mlops-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  feast-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements-dev.txt
+
+      - name: Feast apply dry-run (validate schema)
+        working-directory: mlops/feast
+        run: |
+          pip install feast
+          feast apply --dry-run
+
+      - name: Feast definition tests
+        working-directory: mlops/feast
+        run: pytest tests
+
+  dag-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Airflow CLI
+        run: pip install 'apache-airflow[celery]==3.2.2'
+
+      - name: Validate DAG import (bắt lỗi import/syntax)
+        run: |
+          export AIRFLOW_HOME=$(mktemp -d)
+          airflow db migrate
+          airflow dags list-import-errors || exit 1
+
+      - name: MLOps unit tests
+        run: pytest mlops/tests/unit

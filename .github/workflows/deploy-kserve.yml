@@ -1,0 +1,27 @@
+# Deploy KServe model server — mảnh nhạy nhất, có GATE contract test.
+# Khác backend/frontend: run_contract_tests: true → job contract-test trong
+# build-and-deploy.yml chạy trước, chỉ deploy khi pass.
+# Kết nối: contract test đảm bảo input/output schema + model version đúng
+# (rule AGENTS.md "preserve input and output schema") trước khi áp manifest.
+name: Deploy KServe
+
+on:
+  push:
+    branches: [main]
+    paths: ['serving/**', 'k8s/kserve/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-kserve
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/build-and-deploy.yml
+    with:
+      component: kserve
+      build_context: serving
+      k8s_dir: k8s/kserve
+      run_contract_tests: true   # GATE: contract test bắt buộc
+    secrets:
+      registry_token: ${{ secrets.GITHUB_TOKEN }}

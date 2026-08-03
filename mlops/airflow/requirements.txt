@@ -1,0 +1,12 @@
+apache-airflow
+apache-airflow-providers-amazon
+apache-airflow-providers-cncf-kubernetes
+pandas
+numpy
+scikit-learn
+lightgbm
+boto3
+s3fs
+feast
+mlflow
+redis
